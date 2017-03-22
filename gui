@@ -1,0 +1,114 @@
+import tkinter as tk
+import tkinter.messagebox
+from PIL import ImageTk
+from PIL import Image
+import random
+import os
+
+
+class MainWindow:
+    def __init__(self, master):
+        frame = tk.Frame(master)
+        frame.pack()
+
+        photo = self.setRandomHeader()
+
+        self.myLabel = tk.Label(frame, image=photo, width=931, height=489)
+        self.myLabel.image=photo
+
+        self.myLabel.grid(row=1, columnspan=3)
+        tk.Button(frame, text="C", command=self.changePicture).grid(row=1, column=2, sticky="SE")
+
+        self.welcomeLabel = tk.Label(frame, text="Welcome to Automathic!", width=40)
+        self.welcomeLabel.config(font=("Courier", 30))
+        self.welcomeLabel.grid(row=2, columnspan=3, pady=10)
+
+        tk.Button(frame, text="Exercise Generator", command=self.generatorcClick, width=15).grid(row=3, column=0, padx=10, pady=25)
+        tk.Button(frame, text="Exercise Solver", command=self.solverClick, width=15, state="disable").grid(row=3, column=1)
+        tk.Button(frame, text="About", command=self.aboutClick, width=15).grid(row=3, column=2)
+
+        return
+
+    def generatorcClick(self):
+        global current_window
+        current_window.destroy()
+        current_window = tk.Toplevel(root)
+        current_window.wm_protocol("WM_DELETE_WINDOW", root.destroy)
+        current_window.geometry('{}x{}'.format(1000, 620))
+        m = ExerciseGeneratorWindow(current_window)
+        return
+
+    def solverClick(self):
+
+        return
+
+    def aboutClick(self):
+        tk.messagebox.showinfo("About", "This software made by koren taboh")
+        return
+
+    def changePicture(self):
+        img = self.setRandomHeader()
+        self.myLabel.config(image=img)
+        self.myLabel.image = img
+        return
+
+    def setRandomHeader(self):
+        randy_file = random.choice(os.listdir("header pictures")) #for randy march
+        img = Image.open("header pictures/" + randy_file)
+        size = 931, 489
+        img.thumbnail(size)
+        return ImageTk.PhotoImage(img)
+
+#######################################################################################################################
+
+class ExerciseGeneratorWindow:
+
+    def __init__(self, master):
+
+        frame = tk.Frame(master)
+        frame.pack()
+
+        self.topText = tk.Label(frame, text="Exercise Generator")
+        self.topText.config(font=("Courier", 20))
+        self.topText.grid(row=0, columnspan=2)
+
+        self.choseType = tk.Label(frame, text="Chose Exercise Type:")
+        self.choseType.grid(row=1)
+
+        self.listbox = tk.Listbox(frame)
+
+        self.listbox.config(height=2)
+        self.listbox.insert(0, "Expression")
+        self.listbox.insert(1, "Equation")
+        self.listbox.grid(row=1, column=1, pady=10)
+
+        self.heart = tk.LabelFrame(frame, height=550, width=200)
+        self.heart.grid(row=2, columnspan=3)
+
+        self.simpleL = tk.Label(self.heart, text="Insert your entry here", width=50)
+        self.simpleL.pack()
+
+        self.solutionErea = tk.LabelFrame(frame, width=400, height=400, bg="white")
+        self.solutionErea.grid(row=3, columnspan=3, pady=10)
+
+        self.saveButton = tk.Button(frame, text="Save", width=7).grid(row=4)
+
+
+
+
+
+root = tk.Tk()  # This is the main fram
+root.withdraw()
+
+current_window = tk.Toplevel(root)
+current_window.geometry('{}x{}'.format(1000, 620))
+current_window.wm_protocol("WM_DELETE_WINDOW", root.destroy)
+
+m = MainWindow(current_window)
+
+
+root.mainloop()  # keeps the window open
+'''
+print(random.choice(os.listdir("header pictures")))
+'''
+
