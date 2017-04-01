@@ -4,6 +4,7 @@ from PIL import ImageTk
 from PIL import Image
 import random
 import os
+import Logic as lg
 
 
 class MainWindow:
@@ -19,7 +20,7 @@ class MainWindow:
         self.myLabel.grid(row=1, columnspan=3)
         tk.Button(frame, text="C", command=self.changePicture).grid(row=1, column=2, sticky="SE")
 
-        self.welcomeLabel = tk.Label(frame, text="Welcome to Automathic!", width=40)
+        self.welcomeLabel = tk.Label(frame, text="Welcome to Automathica!", width=40)
         self.welcomeLabel.config(font=("Courier", 30))
         self.welcomeLabel.grid(row=2, columnspan=3, pady=10)
 
@@ -64,7 +65,7 @@ class MainWindow:
 class ExerciseGeneratorWindow:
 
     def __init__(self, master):
-
+        self.solveButton=[]
         frame = tk.Frame(master)
         frame.pack()
 
@@ -80,23 +81,42 @@ class ExerciseGeneratorWindow:
         self.listbox.config(height=2)
         self.listbox.insert(0, "Expression")
         self.listbox.insert(1, "Equation")
+        self.listbox.bind('<<ListboxSelect>>', self.listBoxSelected)
         self.listbox.grid(row=1, column=1, pady=10)
 
         self.heart = tk.LabelFrame(frame, height=550, width=200)
         self.heart.grid(row=2, columnspan=3)
 
-        self.simpleL = tk.Label(self.heart, text="Insert your entry here", width=50)
+        self.solutionErea = tk.LabelFrame(frame, width=400, height=400, bg="white")
+
+        self.solveButton = tk.Button(frame, text="Solve", width=7, state="disabled", command=lambda: self.solve())
+        self.solveButton.grid(row=4, column=0)
+        self.saveButton = tk.Button(frame, text="Save", width=7, state="disabled")
+        self.saveButton.grid(row=4, column=1)
+        self.homeButton = tk.Button(frame, text="Menu", width=7)
+        self.homeButton.grid(row=4, column=2)
+
+        self.simpleL = tk.Button(self.heart, text="Go!", width=50, state="disabled", command=lambda: self.displayNewExersice())
         self.simpleL.pack()
 
-        self.solutionErea = tk.LabelFrame(frame, width=400, height=400, bg="white")
+
         self.solutionErea.grid(row=3, columnspan=3, pady=10)
 
-        self.saveButton = tk.Button(frame, text="Save", width=7).grid(row=4)
 
 
+    def listBoxSelected(self, event):
+        self.simpleL.config(state="active")
+        return
 
+    def displayNewExersice(self):
+        self.exercise = lg.Exersice(complications=4)
+        self.solutionErea.config(text=self.exercise.exstr(), font=("Courier", 12))
+        self.solveButton.config(state="active")
 
+    def solve(self):
+        self.solutionErea.config( text=self.exercise.soltionstr(), font=("Courier", 12))
 
+##font=("Courier", 18)
 root = tk.Tk()  # This is the main fram
 root.withdraw()
 
