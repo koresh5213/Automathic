@@ -1,25 +1,27 @@
 import copy
 import random
 
+
+# This class describes a single variable used later in expressions
 class Variable:
-    def __init__(self, number=1, symbols=[]):
-        if (type(number) == type(3)):
+    def __init__(self, number=0, symbols=[]):
+        if type(number) == type(3):
             self.number = abs(number)
         else:
             self.number = 1
         self.symbols = symbols
 
-        if(number>=0):
+        if number >= 0:
             self.sign = "+"
         else:
             self.sign = "-"
 
         return
 
-    def toString(self, firstInLine="no"):
+    def to_string(self, first_in_line="no"):
         text = ""
 
-        if not(firstInLine=="yes" and self.sign=="+"):
+        if not(first_in_line == "yes" and self.sign == "+"):
             text += self.sign
 
         if not ((self.number is 1) and (len(self.symbols) is not 0)):
@@ -30,128 +32,139 @@ class Variable:
 
         return text
 
-    def isANumber(self):
+    def is_zero(self):
+        return (self.number is 0) and (not self.symbols)
+
+    def is_a_number(self):
         return not self.symbols
 
-    def toNumber(self):
+    def to_number(self):
         number = self.number
-        if(self.sign is "-"):
-            number *=-1
+        if self.sign is "-":
+            number *= -1
 
         return number
 
 
+# This class represents any expression. later used in a process and equations
 class Expression:
 
     def __init__(self, heart=Variable(number=0)):
         self.heart = [heart]
         return
 
-    def addVar(self, var, israndom="no"):
-        if not( type(var) == Variable or type(var) == Friction ):
+    def add_var(self, var, random_location="no"):
+        if not(type(var) == Variable or type(var) == Friction):
             return
 
-        if(self.toString() == "0"):
+        if self.to_string() == "0":
             self.heart.pop(0)
 
-        if(random=="no"):
+        if random_location == "no":
             self.heart.append(var)
             return
 
-        if(len(self.heart) == 0):
+        if len(self.heart) == 0:
             position = 0
-        else: position = random.randrange(0,len(self.heart))
+        else:
+            position = random.randrange(0, len(self.heart))
+
         self.heart.insert(position, var)
         return
 
-    def toString(self):
-        text=""
+    def to_string(self):
+        text = ""
         first = "yes"
         for e in self.heart:
-            if first == "yes" and type(e)==Variable:
-                text += e.toString(firstInLine="yes")
+            if first == "yes" and type(e) == Variable:
+                text += e.to_string(first_in_line="yes")
                 first = "no :["
             else:
-                if(type(e)==Friction):
-                    text+= " + "
-                text += e.toString()
+                if type(e) == Friction:
+                    text += " + "
+                text += e.to_string()
                 text += " "
         return text
 
-    def findMeAFriction(self):
-        frictions = [];
-        for eivar in self.heart:
-            if type(eivar) == Friction :
-                frictions.append(eivar)
+    def find_me_a_friction(self):
+        frictions = []
+        for var in self.heart:
+            if type(var) == Friction:
+                frictions.append(var)
 
-        if len(frictions) is 0 :
-            return -1;
+        if len(frictions) is 0:
+            return -1
 
         return random.choice(frictions)
 
-    def findMeANumber(self):
-        numbers = [];
-        for eivar in self.heart:
-            if type(eivar) == Variable:
-                if(eivar.isANumber()):
-                    numbers.append(eivar.toNumber())
+    def find_me_a_number(self):
+        numbers = []
+        for var in self.heart:
+            if type(var) == Variable:
+                if var.is_a_number():
+                    numbers.append(var.to_number())
 
         if len(numbers) is 0:
-            return -1;
+            return -1
 
         return random.choice(numbers)
 
-    def removeVar(self, var):
+    def remove_var(self, var):
         if not (type(var) is Variable or Friction):
             return
 
-        for eivar in self.heart:
-            if eivar.toString() == var.toString():
-                self.heart.remove(eivar)
+        for my_variable in self.heart:
+            if var.to_string() == my_variable.to_string():
+                self.heart.remove(my_variable)
                 break
         return
 
-    def findMeaVarof(self, symbols):
-        listofvars=[]
-        for eivar in self.heart:
-            if (symbols == eivar.symbols):
-                listofvars.append(eivar)
+    def find_me_a_var_of(self, symbols):
+        list_of_vars = []
+        for var in self.heart:
+            if symbols == var.symbols:
+                list_of_vars.append(var)
+        if symbols == -1:
+            return -1
+        return random.choice(list_of_vars)
 
-        return random.choice(listofvars)
+    def find_me_a_symbol(self):
+        var_list = []
+        for var in self.heart:
+            if not (var.is_a_number()):
+                var_list.append(var)
 
-    def findMeaSymbol(self):
-        varlist = []
-        for eivar in self.heart:
-            if not (eivar.isANumber()):
-                varlist.append(eivar)
-
-        if(len(varlist) == 0):
+        if len(var_list) == 0:
             return -1
 
-        randvar = random.choice(varlist)
-        return randvar.symbols
+        rand_var = random.choice(var_list)
+        return rand_var.symbols
 
-    def findMeARandomVar(self): return self.findMeaVarof(self.findMeaSymbol())
+    def find_me_a_random_var(self):
+        return self.find_me_a_var_of(self.find_me_a_symbol())
 
 
+# this class represents frictions, similar to variables.
 class Friction:
 
-    def __init__(self, numerator=Variable(), denominator=Variable()): ##num= mone, denom= mehane
+    def __init__(self, numerator=Variable(), denominator=Variable()):
 
         self.numerator = numerator
 
-        if denominator.number==0 and denominator.symbols==[]: denominator=1  ##divided by zero
+        if denominator.number == 0 and denominator.symbols == []:
+            denominator = 1  # divided by zero
         self.denominator = denominator
 
         return
 
-    def toString(self):
+    def to_string(self):
         text = "<"
-        text+= self.numerator.toString(firstInLine="yes")
-        text+= " / "
-        text+= self.denominator.toString(firstInLine="yes")
-        text+= ">"
+        text += self.numerator.to_string(first_in_line="yes")
+        text += " / "
+        text += self.denominator.to_string(first_in_line="yes")
+        text += ">"
         return text
+
 
 class ExpressionProcess:
 
@@ -159,67 +172,73 @@ class ExpressionProcess:
         self.solution = solution
         self.process = [self.solution]
 
-    def complicate(self, method=0):
+    def complicate_step(self, method=0, levels=1):
         last = copy.deepcopy(self.process[-1])
         dup = last
 
-        if method not in (1,2):
-            method = random.randint(1,2)
+        if method not in (1, 2):
+            method = random.randint(1, 2)
+
 
         if method == 1:
-            randnumberfromexpression = Variable(number=last.findMeANumber())
-            randnumbertosubtract = random.randrange(1, 15, 2)
-            numbertoadd = randnumberfromexpression.toNumber() - randnumbertosubtract
+            for i in range(levels):
+                rand_number_from_expression = Variable(number=last.find_me_a_number())
+                rand_number_to_subtract = random.randrange(1, 15, 2)
+                number_to_add = rand_number_from_expression.to_number() - rand_number_to_subtract
 
-            dup.removeVar(randnumberfromexpression)
-            dup.addVar(Variable(number=randnumbertosubtract), israndom="yes!")
-            dup.addVar(Variable(number=numbertoadd), israndom="yes!")
+                dup.remove_var(rand_number_from_expression)
+                dup.add_var(Variable(number=rand_number_to_subtract), random_location="yes!")
+                dup.add_var(Variable(number=number_to_add), random_location="yes!")
 
         if method == 2:
-            randvarfromexpression = last.findMeARandomVar()
+            for i in range(levels):
+                rand_var_from_expression = last.find_me_a_random_var()
+                while rand_var_from_expression == -1:
+                    rand_var_from_expression = last.find_me_a_random_var()
 
-            randnumbertosubtract = random.randrange(1, 15, 2)
-            randvartosubtract = Variable(number=randnumbertosubtract, symbols=randvarfromexpression.symbols)
+                rand_number_to_subtract = random.randrange(1, 15, 2)
+                rand_var_to_subtract = Variable(number=rand_number_to_subtract, symbols=rand_var_from_expression.symbols)
 
-            numbertoadd = randvarfromexpression.toNumber() - randnumbertosubtract
-            vartoadd = Variable(number=numbertoadd, symbols=randvarfromexpression.symbols)
+                number_to_add = rand_var_from_expression.to_number() - rand_number_to_subtract
+                var_to_add = Variable(number=number_to_add, symbols=rand_var_from_expression.symbols)
 
-            dup.removeVar(randvarfromexpression)
-            dup.addVar(randvartosubtract, israndom="yes!")
-            dup.addVar(vartoadd, israndom="yes!")
+                dup.remove_var(rand_var_from_expression)
+                dup.add_var(rand_var_to_subtract, random_location="yes!")
+                dup.add_var(var_to_add, random_location="yes!")
 
         self.process.append(dup)
 
-    def toString(self):
-        text=""
+    def to_string(self):
+        text = ""
         rev = self.process[::-1]
         for e in rev:
-            text += e.toString()
+            text += e.to_string()
             text += "\n"
         return text[:-1]
 
-    def getlatest(self):
+    def get_latest(self):
         return self.process[-1]
 
-class Exersice:
+
+class Exercise:
     def __init__(self, complications=2):
-        randstartingvar = random.randint(0,10)
-        randnumbertingvar = random.randint(0, 10)
-        var1 = Variable(number= randstartingvar, symbols=["x"])
-        var2 = Variable(number=randnumbertingvar)
+        rand_starting_var = random.randint(0, 10)
+        rand_number_in_var = random.randint(0, 10)
+        var1 = Variable(number=rand_starting_var, symbols=["x"])
+        var2 = Variable(number=rand_number_in_var)
 
         exp = Expression(var1)
-        exp.addVar(var2)
+        exp.add_var(var2)
 
         self.pro = ExpressionProcess(solution=exp)
         for i in range(complications):
             self.pro.complicate()
 
-    def exstr(self):
-        return self.pro.getlatest().toString()
+    def exercise_to_string(self):
+        return self.pro.get_latest().to_string()
 
-    def soltionstr(self):
-        return self.pro.toString()
+    def solution_to_string(self):
+        return self.pro.to_string()
 
 
 
@@ -280,7 +299,7 @@ print(bituy1.toString())
 bituy1.removeVar(eivar3)
 print(bituy1.toString())
 """
-'''
+
 eivar1 = Variable(number=3, symbols=["x", "y"])
 eivar2 = Variable(number=-5)
 eivar3 = Variable(number=-2, symbols=["x"])
@@ -289,13 +308,12 @@ eivar5 = Variable()
 eivar6 = Variable(number=3, symbols=["x"])
 
 bituy1 = Expression(eivar1)
-bituy1.addVar(eivar2)
+bituy1.add_var(eivar2)
 
 ep = ExpressionProcess(solution=bituy1)
-print(ep.toString())
-ep.complicate()
-ep.complicate(method=1)
-ep.complicate(method=3)
-print(ep.toString())
-'''
+print(ep.to_string())
+ep.complicate_step(method=2, levels=5)
+print(ep.to_string())
+print(bituy1.find_me_a_var_of([]).to_string())
+
 
