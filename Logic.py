@@ -1,6 +1,7 @@
 import copy
 import random
 
+types_of_questions = ["expression", "equation"];
 
 # This class describes a single variable used later in expressions
 class Variable:
@@ -45,6 +46,23 @@ class Variable:
 
         return number
 
+    def get_symbol(self):
+        return self.symbols
+
+    def is_identical(self, var):
+        if type(var) is not Variable:
+            return -1
+
+        if self.to_number() != var.to_number():
+            return -1
+
+        for symbol in self.get_symbol():
+            try:
+                var.symbols.index(symbol)
+            except:
+                return -1
+        else:
+            return 1
 
 # This class represents any expression. later used in a process and equations
 class Expression:
@@ -111,20 +129,20 @@ class Expression:
 
     def remove_var(self, var):
         if not (type(var) is Variable or Friction):
-            return
+            return -1
 
         for my_variable in self.heart:
-            if var.to_string() == my_variable.to_string():
+            if var.is_identical(my_variable) == 1:
                 self.heart.remove(my_variable)
-                break
-        return
+                return 1
+        return -1
 
     def find_me_a_var_of(self, symbols):
         list_of_vars = []
         for var in self.heart:
             if symbols == var.symbols:
                 list_of_vars.append(var)
-        if symbols == -1:
+        if not list_of_vars:
             return -1
         return random.choice(list_of_vars)
 
@@ -142,6 +160,42 @@ class Expression:
 
     def find_me_a_random_var(self):
         return self.find_me_a_var_of(self.find_me_a_symbol())
+
+    def return_symbols(self):
+        symbol_list = []
+        for var in self.heart:
+            if var not in symbol_list:
+                symbol_list.append(var.get_symbol())
+
+        return symbol_list
+
+    def is_identical(self, expression):
+        if type(expression) is not Expression:
+            return -1
+
+        temp_self  = copy.deepcopy(self)
+        temp_other = list(expression.heart)
+
+        if len(self.heart) != len(expression.heart):
+            return -1
+
+        for var in expression.heart:
+            if temp_self.remove_var(var) == -1:
+                return -1
+
+        if not len(temp_self.heart) == 0:
+            return -1
+
+        return 1
+
+    def is_var_in_expresssion(self, mystery):
+        for variable in self.heart:
+            if variable.is_identical(mystery) == 1:
+                return 1
+        return -1
+
+
+
 
 
 # this class represents frictions, similar to variables.
@@ -172,39 +226,30 @@ class ExpressionProcess:
         self.solution = solution
         self.process = [self.solution]
 
-    def complicate_step(self, method=0, levels=1):
+    def complicate_step(self, symbols, levels=1):
         last = copy.deepcopy(self.process[-1])
         dup = last
 
-        if method not in (1, 2):
-            method = random.randint(1, 2)
+        for i in range(levels):
+            rand_var_from_expression = last.find_me_a_var_of(symbols)
+            if rand_var_from_expression == -1:
+                return
 
+            rand_number_to_subtract = random.randrange(1, 15, 2)
 
-        if method == 1:
-            for i in range(levels):
-                rand_number_from_expression = Variable(number=last.find_me_a_number())
+            number_to_add = rand_var_from_expression.to_number() - rand_number_to_subtract
+
+            while number_to_add == 0:
                 rand_number_to_subtract = random.randrange(1, 15, 2)
-                number_to_add = rand_number_from_expression.to_number() - rand_number_to_subtract
-
-                dup.remove_var(rand_number_from_expression)
-                dup.add_var(Variable(number=rand_number_to_subtract), random_location="yes!")
-                dup.add_var(Variable(number=number_to_add), random_location="yes!")
-
-        if method == 2:
-            for i in range(levels):
-                rand_var_from_expression = last.find_me_a_random_var()
-                while rand_var_from_expression == -1:
-                    rand_var_from_expression = last.find_me_a_random_var()
-
-                rand_number_to_subtract = random.randrange(1, 15, 2)
-                rand_var_to_subtract = Variable(number=rand_number_to_subtract, symbols=rand_var_from_expression.symbols)
 
                 number_to_add = rand_var_from_expression.to_number() - rand_number_to_subtract
-                var_to_add = Variable(number=number_to_add, symbols=rand_var_from_expression.symbols)
 
-                dup.remove_var(rand_var_from_expression)
-                dup.add_var(rand_var_to_subtract, random_location="yes!")
-                dup.add_var(var_to_add, random_location="yes!")
+            rand_var_to_subtract = Variable(number=rand_number_to_subtract, symbols=rand_var_from_expression.symbols)
+            var_to_add = Variable(number=number_to_add, symbols=rand_var_from_expression.symbols)
+
+            dup.remove_var(rand_var_from_expression)
+            dup.add_var(rand_var_to_subtract, random_location="yes!")
+            dup.add_var(var_to_add, random_location="yes!")
 
         self.process.append(dup)
 
@@ -219,26 +264,146 @@ class ExpressionProcess:
     def get_latest(self):
         return self.process[-1]
 
+    def solution_to_sting(self):
+        return self.solution.to_string()
 
-class Exercise:
-    def __init__(self, complications=2):
-        rand_starting_var = random.randint(0, 10)
-        rand_number_in_var = random.randint(0, 10)
-        var1 = Variable(number=rand_starting_var, symbols=["x"])
-        var2 = Variable(number=rand_number_in_var)
+    def get_symbols(self):
+        return self.solution.return_symbols()
 
-        exp = Expression(var1)
-        exp.add_var(var2)
 
-        self.pro = ExpressionProcess(solution=exp)
-        for i in range(complications):
-            self.pro.complicate()
+class ExpressionExercise:
+    def __init__(self, complications=2, variables=1):
+
+        if variables not in range(1,5):
+            variables = 1
+
+        free_var = Variable(number=random.randint(0, 10))
+        solution = Expression(free_var)
+
+        character_match = ["x", "y", "z", "a"]
+
+        for index in range(1,variables+1):
+            temp = Variable(number=random.randint(1, 10), symbols=[character_match[index-1]])
+            solution.add_var(temp)
+
+        self.pro = ExpressionProcess(solution=solution)
+
+        self.pro.complicate_step([])
+        for j in range(1,variables+1):
+            self.pro.complicate_step([character_match[j-1]], levels=variables)
 
     def exercise_to_string(self):
         return self.pro.get_latest().to_string()
 
     def solution_to_string(self):
-        return self.pro.to_string()
+        return self.pro.solution_to_sting()
+
+    def get_symbols(self):
+        return self.pro.get_symbols()
+
+
+class AmericanTest:
+
+    def __init__(self, number_of_questions=10):
+
+        self.question_array = []
+        self.answer_matrix = [[0 for x in range(3)] for y in range(number_of_questions)]
+        self.right_answers = []
+        self.user_choice = [-1 for x in range(number_of_questions)]
+
+        for i in range(number_of_questions):
+            self.question_array.append(ExpressionExercise(complications=int(1 + i/6), variables=int(1+(i/4))))
+
+        for question in range (number_of_questions):
+            for answer in range(3):
+                current_symbols = self.question_array[question].get_symbols()
+                self.answer_matrix[question][answer] = self.create_a_random_asnwer(current_symbols)
+                temp_expression = self.create_a_random_asnwer(current_symbols)
+                ##for compare in range(answer):
+
+
+
+            self.right_answers.append(random.randrange(0, 4))
+
+
+    def accept_answer(self, question, answer):
+        self.user_choice[question] = answer
+
+    def number_of_questions(self):
+        return len(self.question_array)
+
+    def calc_grade(self):
+        factor = 100 / len(self.question_array)
+        grade = 0;
+
+        for question in range(len(self.question_array)):
+            if self.right_answers[question] == self.user_choice[question]:
+                grade+=factor
+
+        return grade
+
+    def create_a_random_asnwer(self, symbols):
+        random_expression = Expression()
+
+        for symbol in symbols:
+            temp = Variable(number=random.randrange(1, 15, 2), symbols=symbol)
+            random_expression.add_var(temp)
+
+        return random_expression
+
+    def test_to_string(self):
+        s = "Test \n"
+        for question in range(len(self.question_array)):
+            s += ""; s +=str(question+1); s += ". ";
+            s += self.question_array[question].exercise_to_string()
+            s+="\n"
+            s+= self.answer_to_string(question)
+            s+="\n"
+
+        return s
+
+    def question_to_string(self, question_number):
+        s=""; s += self.question_array[question_number].exercise_to_string(); s += "\n";
+
+        return s
+
+    def answer_to_string(self, question_number):
+        s=""
+        right_answer = self.right_answers[question_number]
+
+        letters= ["a", "b", "c", "d"]
+        wrong_answer_index = 0
+
+        for i in range(4):
+            if i == right_answer:
+                s += "  "
+                s += letters[i];
+                s += ". ";
+                s += self.question_array[question_number].solution_to_string();
+                s += "\n";
+
+            else:
+                s += "  "
+                s += letters[i]; s += ". "
+                s += self.answer_matrix[question_number][wrong_answer_index].to_string()
+                s += "\n"
+                wrong_answer_index=wrong_answer_index+1
+        return s
+
+    def solution_to_string(self):
+        s=""
+        i=1
+        for question in self.question_array:
+            s += str(i); s+= ". ";
+            s += str(self.right_answers[question]); s += "\n"
+            i=i+1
+        return s
+
+    def get_question_class(self, question_number):
+        try:
+            return self.question_array[question_number]
+        except:
+            return -1;
 
 
 
@@ -299,7 +464,7 @@ print(bituy1.toString())
 bituy1.removeVar(eivar3)
 print(bituy1.toString())
 """
-
+'''
 eivar1 = Variable(number=3, symbols=["x", "y"])
 eivar2 = Variable(number=-5)
 eivar3 = Variable(number=-2, symbols=["x"])
@@ -312,8 +477,46 @@ bituy1.add_var(eivar2)
 
 ep = ExpressionProcess(solution=bituy1)
 print(ep.to_string())
-ep.complicate_step(method=2, levels=5)
+ep.complicate_step([], levels=5)
 print(ep.to_string())
-print(bituy1.find_me_a_var_of([]).to_string())
+'''
 
 
+##test = ExpressionAmericanTest()
+'''
+eivar1 = Variable(number=-2, symbols=["x"])
+eivar2 = Variable(number=6, symbols=["y"])
+eivar3 = Variable(number=-2)
+bituy1 = Expression()
+bituy1.add_var(eivar1)
+bituy1.add_var(eivar2)
+bituy1.add_var(eivar3)
+print(bituy1.return_symbols())
+
+
+test = AmericanTest()
+print(test.test_to_string())
+##print(test.solution_to_string())
+print(str(test.calc_grade()))
+'''
+eivar1 = Variable(number=-2, symbols=["x"])
+eivar2 = Variable(number=6, symbols=["y"])
+eivar3 = Variable(number=-2)\
+
+bituy1 = Expression()
+bituy1.add_var(Variable(number=6, symbols=["xy"]))
+bituy1.add_var(Variable(number=6, symbols=["xy"]))
+bituy1.add_var(Variable(number=-2, symbols=["y", "x"]))
+bituy1.add_var(Variable(number=-2, symbols=["y", "x"]))
+
+bituy2 = Expression()
+bituy2.add_var(Variable(number=6, symbols=["xy"]))
+bituy2.add_var(Variable(number=6, symbols=["xy"]))
+bituy2.add_var(Variable(number=-2, symbols=["y", "x"]))
+bituy2.add_var(Variable(number=-2, symbols=["xx","y"]))
+
+##print ( str( Variable(number=6, symbols=["y"]).get_symbol().index("y")))
+
+##print(str(Variable(number=6, symbols=["x", "y"]).is_identical(Variable(number=6, symbols=["y", "yx"]))))
+
+print ( str (bituy1.is_identical(bituy2)))
