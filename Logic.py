@@ -1,9 +1,6 @@
 import copy
 import random
 
-types_of_questions = ["expression", "equation"];
-
-# This class describes a single variable used later in expressions
 class Variable:
     def __init__(self, number=0, symbols=[]):
         if type(number) == type(3):
@@ -64,7 +61,41 @@ class Variable:
         else:
             return 1
 
-# This class represents any expression. later used in a process and equations
+    def multiply(self, mul): ##mul is also from type expression
+        if self.sign == mul.sign:
+            self.sign = "+"
+        else:
+            self.sign = "-"
+
+        self.number = self.number * mul.number
+
+        self.symbols = list(set(self.symbols).union(mul.symbols))
+
+
+
+# this class represents frictions, similar to variables.
+class Friction:
+
+    def __init__(self, numerator=Variable(), denominator=Variable()):
+
+        self.numerator = numerator
+
+        if denominator.number == 0 and denominator.symbols == []:
+            denominator = 1  # divided by zero
+        self.denominator = denominator
+
+        return
+
+    def to_string(self):
+        text = "<"
+        text += self.numerator.to_string(first_in_line="yes")
+        text += " / "
+        text += self.denominator.to_string(first_in_line="yes")
+        text += ">"
+        return text
+
+######################################################################
+
 class Expression:
 
     def __init__(self, heart=Variable(number=0)):
@@ -194,30 +225,9 @@ class Expression:
                 return 1
         return -1
 
-
-
-
-
-# this class represents frictions, similar to variables.
-class Friction:
-
-    def __init__(self, numerator=Variable(), denominator=Variable()):
-
-        self.numerator = numerator
-
-        if denominator.number == 0 and denominator.symbols == []:
-            denominator = 1  # divided by zero
-        self.denominator = denominator
-
-        return
-
-    def to_string(self):
-        text = "<"
-        text += self.numerator.to_string(first_in_line="yes")
-        text += " / "
-        text += self.denominator.to_string(first_in_line="yes")
-        text += ">"
-        return text
+    def multiply(self, mul): ##mul is type Variable
+        for current in self.heart:
+            current.multiply(mul)
 
 
 class ExpressionProcess:
@@ -270,7 +280,6 @@ class ExpressionProcess:
     def get_symbols(self):
         return self.solution.return_symbols()
 
-
 class ExpressionExercise:
     def __init__(self, complications=2, variables=1):
 
@@ -295,228 +304,69 @@ class ExpressionExercise:
     def exercise_to_string(self):
         return self.pro.get_latest().to_string()
 
-    def solution_to_string(self):
+    def solution_to_string(self, full="no"):
+
+        if (full=="yes"):
+            return self.pro.to_string()
+
         return self.pro.solution_to_sting()
 
     def get_symbols(self):
         return self.pro.get_symbols()
 
+##############################################################################
 
-class AmericanTest:
+class Equation:
+    def __init__(self, sideA= Expression, sideB=Expression):
+        self.sideA = sideA
+        self.sideB = sideB
 
-    def __init__(self, number_of_questions=10):
-
-        self.question_array = []
-        self.answer_matrix = [[0 for x in range(3)] for y in range(number_of_questions)]
-        self.right_answers = []
-        self.user_choice = [-1 for x in range(number_of_questions)]
-
-        for i in range(number_of_questions):
-            self.question_array.append(ExpressionExercise(complications=int(1 + i/6), variables=int(1+(i/4))))
-
-        for question in range (number_of_questions):
-            for answer in range(3):
-                current_symbols = self.question_array[question].get_symbols()
-                self.answer_matrix[question][answer] = self.create_a_random_asnwer(current_symbols)
-                temp_expression = self.create_a_random_asnwer(current_symbols)
-                ##for compare in range(answer):
-
-
-
-            self.right_answers.append(random.randrange(0, 4))
-
-
-    def accept_answer(self, question, answer):
-        self.user_choice[question] = answer
-
-    def number_of_questions(self):
-        return len(self.question_array)
-
-    def calc_grade(self):
-        factor = 100 / len(self.question_array)
-        grade = 0;
-
-        for question in range(len(self.question_array)):
-            if self.right_answers[question] == self.user_choice[question]:
-                grade+=factor
-
-        return grade
-
-    def create_a_random_asnwer(self, symbols):
-        random_expression = Expression()
-
-        for symbol in symbols:
-            temp = Variable(number=random.randrange(1, 15, 2), symbols=symbol)
-            random_expression.add_var(temp)
-
-        return random_expression
-
-    def test_to_string(self):
-        s = "Test \n"
-        for question in range(len(self.question_array)):
-            s += ""; s +=str(question+1); s += ". ";
-            s += self.question_array[question].exercise_to_string()
-            s+="\n"
-            s+= self.answer_to_string(question)
-            s+="\n"
-
-        return s
-
-    def question_to_string(self, question_number):
-        s=""; s += self.question_array[question_number].exercise_to_string(); s += "\n";
-
-        return s
-
-    def answer_to_string(self, question_number):
+    def to_string(self):
         s=""
-        right_answer = self.right_answers[question_number]
-
-        letters= ["a", "b", "c", "d"]
-        wrong_answer_index = 0
-
-        for i in range(4):
-            if i == right_answer:
-                s += "  "
-                s += letters[i];
-                s += ". ";
-                s += self.question_array[question_number].solution_to_string();
-                s += "\n";
-
-            else:
-                s += "  "
-                s += letters[i]; s += ". "
-                s += self.answer_matrix[question_number][wrong_answer_index].to_string()
-                s += "\n"
-                wrong_answer_index=wrong_answer_index+1
+        s+=self.sideA.to_string()
+        s+=" = "
+        s+=self.sideB.to_string()
         return s
 
-    def solution_to_string(self):
-        s=""
-        i=1
-        for question in self.question_array:
-            s += str(i); s+= ". ";
-            s += str(self.right_answers[question]); s += "\n"
-            i=i+1
+    def multiply(self, mul): ##mul is from type variable
+        self.sideA.multiply(mul)
+        self.sideB.multiply(mul)
+
+
+class EquationProcess:
+    def __init__(self, solution=Equation()):
+        self.solution = solution
+        self.process = [self.solution]
+
+    def complicate_step(self):
+        last = copy.deepcopy(self.process[-1])
+        dup = last
+
+        dup.multiply(lg.Variable(number = 4))
+
+        self.process.append(dup)
+
+    def to_string(self):
+        s= ""
+        rev = self.process[::-1]
+        for equation in rev:
+            s+=equation.to_string(); s+=" \n"
+
         return s
 
-    def get_question_class(self, question_number):
-        try:
-            return self.question_array[question_number]
-        except:
-            return -1;
+class EquationExercise:
+    def __init__(self, complications=2):
 
+        temp_expression = lg.Expression(heart=lg.Variable(number=1, symbols=["x"]))
+        temp_expression2 = lg.Expression(heart=lg.Variable(number=random.randrange(-10, 10, 2)))
 
+        self.solution = Equation(sideA=temp_expression, sideB=temp_expression2)
 
-######################################################################################################
-#####                   ###################################     #########            #################
-#####                   #########           ############      ###########            #################
-#########       ###############    ########    #######        ##############    ######################
-#########       ##############                  ##########         #########    ######################
-##########       #############      ##################           ###########    ######################
-##########       ################          ##########    ###################    ######################
-######################################################################################################
-"""
-eivar1 = Variable(number=3, symbols=["x", "y"])
-eivar2 = Variable(number=-5)
-eivar3 = Variable(number=-2, symbols=["x"])
-eivar4 = Variable(number=4)
-eivar5 = Variable()
+        self.pro = EquationProcess(solution=self.solution)
+        self.pro.complicate_step()
 
-f1 = Friction(numerator=eivar1, denominator=eivar2)
-f2 = Friction(numerator=Variable(4), denominator=Variable(-3) )
+    def solution_to_string(self, full="no"):
+        if full == "yes":
+            return self.pro.to_string()
 
-
-bituy1.addVar(f2)
-bituy1.addVar(eivar4)
-bituy1.addVar(eivar3)
-bituy1.addVar(f2)
-
-ep = ExpressionProcess()
-
-ep.complicate()
-ep.complicate()
-ep.complicate()
-
-print ("e1: ", eivar1.toString(), "\ne2: ", eivar2.toString(), "\ne3: ", eivar3.toString(), "\ne4: ", eivar4.toString(), "\ne5: ", eivar5.toString())
-print ("f1: ", f1.toString(), "\nf2: ", f2.toString())
-print ("b1: ", bituy1.toString())
-print (str(bituy1.findMeANumber()))
-##print ("e3 empty: ", eivar3.isANumber(), "\ne4: ", eivar4.isANumber())
-
-
-eivar1 = Variable(number=2, symbols=["x"])
-eivar2 = Variable(number=1, symbols=["x"])
-eivar3 = Variable(number=1)
-print("e1: ", eivar1.toString(), "\ne2: ", eivar2.toString(),"\ne3: ", eivar3.toString())
-
-
-eivar1 = Variable(number=3, symbols=["x", "y"])
-eivar2 = Variable(number=-5)
-eivar3 = Variable(number=-2, symbols=["x"])
-eivar4 = Variable(number=4)
-eivar5 = Variable()
-
-bituy1 = Expression()
-bituy1.addVar(eivar4)
-bituy1.addVar(eivar3)
-bituy1.addVar(eivar4)
-print(bituy1.toString())
-bituy1.removeVar(eivar3)
-print(bituy1.toString())
-"""
-'''
-eivar1 = Variable(number=3, symbols=["x", "y"])
-eivar2 = Variable(number=-5)
-eivar3 = Variable(number=-2, symbols=["x"])
-eivar4 = Variable(number=4)
-eivar5 = Variable()
-eivar6 = Variable(number=3, symbols=["x"])
-
-bituy1 = Expression(eivar1)
-bituy1.add_var(eivar2)
-
-ep = ExpressionProcess(solution=bituy1)
-print(ep.to_string())
-ep.complicate_step([], levels=5)
-print(ep.to_string())
-'''
-
-
-##test = ExpressionAmericanTest()
-'''
-eivar1 = Variable(number=-2, symbols=["x"])
-eivar2 = Variable(number=6, symbols=["y"])
-eivar3 = Variable(number=-2)
-bituy1 = Expression()
-bituy1.add_var(eivar1)
-bituy1.add_var(eivar2)
-bituy1.add_var(eivar3)
-print(bituy1.return_symbols())
-
-
-test = AmericanTest()
-print(test.test_to_string())
-##print(test.solution_to_string())
-print(str(test.calc_grade()))
-'''
-eivar1 = Variable(number=-2, symbols=["x"])
-eivar2 = Variable(number=6, symbols=["y"])
-eivar3 = Variable(number=-2)\
-
-bituy1 = Expression()
-bituy1.add_var(Variable(number=6, symbols=["xy"]))
-bituy1.add_var(Variable(number=6, symbols=["xy"]))
-bituy1.add_var(Variable(number=-2, symbols=["y", "x"]))
-bituy1.add_var(Variable(number=-2, symbols=["y", "x"]))
-
-bituy2 = Expression()
-bituy2.add_var(Variable(number=6, symbols=["xy"]))
-bituy2.add_var(Variable(number=6, symbols=["xy"]))
-bituy2.add_var(Variable(number=-2, symbols=["y", "x"]))
-bituy2.add_var(Variable(number=-2, symbols=["xx","y"]))
-
-##print ( str( Variable(number=6, symbols=["y"]).get_symbol().index("y")))
-
-##print(str(Variable(number=6, symbols=["x", "y"]).is_identical(Variable(number=6, symbols=["y", "yx"]))))
-
-print ( str (bituy1.is_identical(bituy2)))
+        return self.solution.to_string()
