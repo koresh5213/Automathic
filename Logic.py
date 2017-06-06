@@ -1,6 +1,42 @@
 import copy
 import random
 
+def string_to_expression(string):
+    final_expression = Expression()
+    print (hex(id(final_expression.heart[0].symbols)))
+    current_var = -1; current_number=0; current_symbols=""
+    for current in string:
+        if current is "+" or current is "-":
+            if current_var is not -1:
+                final_expression.add_var(current_var)
+
+            current_symbols=""
+            current_number=0
+            current_var = Variable()
+            current_var.sign = current
+
+        if current.isdigit():
+            if current_var is -1:
+                current_var = Variable()
+            current_number*= 10
+            current_number+=int(current)
+            current_var.number = current_number
+
+        print (hex(id(current_var.symbols)))
+
+        if current.isalpha():
+            current_var.add_symbol(current)
+
+        ##if not (current.isdigit() or current.isalpha()):
+        ##    return -1
+
+    if current_var is not -1:
+        final_expression.add_var(current_var)
+
+    return final_expression
+
+
+
 class Variable:
     def __init__(self, number=0, symbols=[]):
         if type(number) == type(3):
@@ -71,6 +107,21 @@ class Variable:
 
         self.symbols = list(set(self.symbols).union(mul.symbols))
 
+    def add_number(self, num): ##num is from type int
+        a = self.number
+        if self.sign is "-":
+            a = a * -1
+
+        sum = a + num
+
+        self.number = abs(sum)
+        if sum >= 0:
+            self.sign = "+"
+        else:
+            self.sign = "-"
+
+    def add_symbol(self, symbol):
+        self.symbols.append(symbol)
 
 
 # this class represents frictions, similar to variables.
@@ -171,7 +222,7 @@ class Expression:
     def find_me_a_var_of(self, symbols):
         list_of_vars = []
         for var in self.heart:
-            if symbols == var.symbols:
+            if var.symbols == symbols and var.symbols not in list_of_vars:
                 list_of_vars.append(var)
         if not list_of_vars:
             return -1
@@ -281,7 +332,10 @@ class ExpressionProcess:
         return self.solution.return_symbols()
 
 class ExpressionExercise:
-    def __init__(self, complications=2, variables=1):
+    def __init__(self, diff=5):
+
+        complications = int(diff / 6 + 1)
+        variables = int(diff / 4 + 1)
 
         if variables not in range(1,5):
             variables = 1
@@ -314,6 +368,9 @@ class ExpressionExercise:
     def get_symbols(self):
         return self.pro.get_symbols()
 
+    def get_solution(self):
+        return self.pro.process[0]
+
 ##############################################################################
 
 class Equation:
@@ -332,17 +389,56 @@ class Equation:
         self.sideA.multiply(mul)
         self.sideB.multiply(mul)
 
+    def var_add(self, add, side="a"): ##add is from type variable
+        if side is "a":
+            var = self.sideA.find_me_a_var_of(add.get_symbol())
+            if var is -1:
+                return
+            var.add_number(add.to_number())
+            self.sideB.add_var(add, random_location="yes")
+        else:
+            var = self.sideB.find_me_a_var_of(add.get_symbol())
+            if var is -1:
+                return
+            self.sideA.add_var(add, random_location="yes")
+            self.sideB.find_me_a_var_of(add.get_symbol()).add_number(add.to_number())
+
+    def simple_add(self, add):
+        self.sideA.add_var(add, random_location="yes")
+        self.sideB.add_var(add, random_location="yes")
+
+    ##def number_add(self, add):
+
+
+    def find_me_a_symbol(self):
+        return self.sideA.find_me_a_symbol()
+
 
 class EquationProcess:
     def __init__(self, solution=Equation()):
         self.solution = solution
         self.process = [self.solution]
 
-    def complicate_step(self):
+    def complicate_step(self, complications=1, method=1, side="a"):
         last = copy.deepcopy(self.process[-1])
         dup = last
 
-        dup.multiply(lg.Variable(number = 4))
+        for i in range(complications):
+            if method is 1: ##multiply both sections in the same number
+                dup.multiply(Variable(number = random.randrange(-10,10)))
+
+            if method is 2: ##add variable
+                symbol = self.solution.find_me_a_symbol()
+                number = 0
+                while number is 0:
+                    number = random.randrange(-10,10)
+                dup.var_add(Variable(number=number, symbols=symbol), side=side)
+
+            if method is 3: ##simple addition
+                number = 0
+                while number is 0:
+                    number = random.randrange(-10, 10)
+                dup.simple_add(Variable(number=number))
 
         self.process.append(dup)
 
@@ -354,19 +450,62 @@ class EquationProcess:
 
         return s
 
-class EquationExercise:
-    def __init__(self, complications=2):
+    def eq_to_string(self):
+        return self.process[-1].to_string()
 
-        temp_expression = lg.Expression(heart=lg.Variable(number=1, symbols=["x"]))
-        temp_expression2 = lg.Expression(heart=lg.Variable(number=random.randrange(-10, 10, 2)))
+class EquationExercise:
+    def __init__(self, diff=2):
+
+        symbols = ["x", "x", "y", "z", "a", "b"]
+        symbol = symbols[random.randrange(0, len(symbols))]
+
+        temp_expression = Expression(heart=Variable(number=1, symbols=symbol))
+        temp_expression2 = Expression(heart=Variable(number=random.randrange(-10, 10, 2)))
 
         self.solution = Equation(sideA=temp_expression, sideB=temp_expression2)
 
         self.pro = EquationProcess(solution=self.solution)
-        self.pro.complicate_step()
+        self.pro.complicate_step(method=1, complications=2)
+        self.pro.complicate_step(method=2, complications=3)
+        self.pro.complicate_step(method=3, complications=3)
+
+    def exercise_to_string(self):
+        return self.pro.solution.to_string()
+
 
     def solution_to_string(self, full="no"):
         if full == "yes":
             return self.pro.to_string()
 
         return self.solution.to_string()
+
+    def get_solution(self):
+        return self.pro.solution
+
+def simple_pdf():
+    from fpdf import FPDF
+
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font('Courier', 'B', 16)
+    pdf.cell(40, 10, '1!',1,1)
+    pdf.cell(40, 10, '2!',1,1)
+    pdf.cell(40, 10, '3!',1,1)
+    pdf.output('tuto5.pdf', 'F')
+
+'''
+ex  = EquationExercise()
+##print(ex.pro.eq_to_string())
+expr = Expression()
+expr.add_var(Variable(number=2, symbols=["x","t"]))
+expr.add_var(Variable(number=-1, symbols=[]))
+print(expr.to_string())
+print(expr.find_me_a_var_of([]).to_string())
+
+ex1 = string_to_expression("2a-120x")
+print(ex1.to_string())
+ex2 = string_to_expression("-120+2323")
+print(ex2.to_string())
+print(str(ex1.is_identical(ex2)))
+'''
+simple_pdf()

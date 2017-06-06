@@ -26,7 +26,7 @@ class MainWindow2:
         self.down_frame.pack_propagate(0)
 
         self.canvas = tk.Canvas(self.middle_frame)
-        self.canvas.pack(fill="both")
+        self.canvas.pack(fill="both",expand=1)
 
         self.upper_frame.pack(fill="x")
 
@@ -40,9 +40,17 @@ class MainWindow2:
         self.exercise_button = tk.Button(self.down_frame, text="Exercise", height= 1, width=9, bg="#525286", fg="white", font=self.button_font)
         self.about_button = tk.Button(self.down_frame, text="About", height= 1, width=9, bg="#525286", fg="white", font=self.button_font)
 
-        self.start_game_button.pack(side="left", padx=(620/9))
-        self.exercise_button.pack(side="left", padx=(620/9))
-        self.about_button.pack(side="left", padx=(620/9))
+        self.bottom_frame_main()
+
+        self.game_config_game = -1
+        self.game_config_number = -1
+        self.game_config_question = -1
+
+        self.go_button_game = tk.Button(self.down_frame, text="Go", height= 1, width=9, bg="#525286", fg="white", font=self.button_font)
+        self.return_button= tk.Button(self.down_frame, text="Return", height= 1, width=9, bg="#525286", fg="white", font=self.button_font)
+
+        self.go_button_game.bind("<Button-1>", self.start_game)
+        self.return_button.bind("<Button-1>", self.return_to_main)
 
         self.information_bar = tk.Text(self.middle_frame, height=1 )
         self.write_to_information_bar("Welcome to Automathica!")
@@ -61,11 +69,34 @@ class MainWindow2:
 
         self.american_test_button = tk.Button(self.canvas, text="American", width=11, font=self.button_font_small, bg="#525286", fg="white")
         self.regular_test_button = tk.Button(self.canvas, text="Regular", width=11, font=self.button_font_small, bg="#525286", fg="white")
+        self.five_q_button = tk.Button(self.canvas, text="5",width=3, font=self.button_font_small, bg="#525286", fg="white")
+        self.ten_q_button = tk.Button(self.canvas, text="10", width=3, font=self.button_font_small, bg="#525286",
+                                       fg="white")
+        self.fifteen_q_button = tk.Button(self.canvas, text="15", width=3, font=self.button_font_small, bg="#525286",
+                                       fg="white")
+        self.twenty_q_button = tk.Button(self.canvas, text="20", width=3, font=self.button_font_small, bg="#525286",
+                                       fg="white")
+
+
+        self.question_type_listbox = tk.Listbox(self.canvas, selectmode="single", height=3, width=25)
+        self.scrollbar = tk.Scrollbar(self.question_type_listbox)
+        self.scrollbar.config(command=self.question_type_listbox.yview)
+        self.question_type_listbox.config(yscrollcommand = self.scrollbar.set)
+        self.question_type_listbox.insert(1, "Equation")
+        self.question_type_listbox.insert(2, "Expression")
+
+        self.five_q_button.bind("<Button-1>", lambda event, number=5: self.question_number_change(number))
+        self.ten_q_button.bind("<Button-1>", lambda event, number=10: self.question_number_change(number))
+        self.fifteen_q_button.bind("<Button-1>", lambda event, number=15: self.question_number_change(number))
+        self.twenty_q_button.bind("<Button-1>", lambda event, number=20: self.question_number_change(number))
+
+
         self.new_worksheet_button = tk.Button(self.canvas, text="New", width=11, font=self.button_font_small, bg="#525286", fg="white")
         self.load_worksheet_button = tk.Button(self.canvas, text="Load", width=11, font=self.button_font_small, bg="#525286", fg="white")
 
-        self.american_test_button.bind("<Button-1>", self.american_test_click)
-        self.regular_test_button.bind("<Button-1>", self.regular_test_click)
+        ##self.american_test_button.bind("<Button-1>", self.american_test_click)
+        self.american_test_button.bind("<Button-1>", lambda event, string="american": self.game_type_change(string))
+        self.regular_test_button.bind("<Button-1>", lambda event, string="regular": self.game_type_change(string))
         self.american_test_button.bind("<Enter>", lambda event, string="Start american test, select the correct answer": self.write_to_information_bar(string))
         self.regular_test_button.bind("<Enter>", lambda event, string="Start regular test, enter the answer": self.write_to_information_bar(string))
         self.new_worksheet_button.bind("<Enter>", lambda event, string="Create a new worksheet, exoprt to pdf or Automathica format": self.write_to_information_bar(string))
@@ -87,6 +118,7 @@ class MainWindow2:
 
         self.current_american_test = lg.AmericanTest()
         self.current_question = -1
+
 
 
 
@@ -112,17 +144,53 @@ class MainWindow2:
         self.american_answer_d.place_forget()
         self.next_button.place_forget()
         self.prev_button.place_forget()
+        self.five_q_button.place_forget()
+        self.ten_q_button.place_forget()
+        self.fifteen_q_button.place_forget()
+        self.twenty_q_button.place_forget()
+        self.question_type_listbox.place_forget()
 
         self.canvas.delete("all")
+
+    def bottom_frame_main(self):
+        self.clean_bottom_frame()
+        self.start_game_button.pack(side="left", padx=(620 / 9))
+        self.exercise_button.pack(side="left", padx=(620 / 9))
+        self.about_button.pack(side="left", padx=(620 / 9))
+
+    def clean_bottom_frame(self):
+        self.start_game_button.pack_forget()
+        self.exercise_button.pack_forget()
+        self.about_button.pack_forget()
+        try:
+            self.go_button_game.pack_forget()
+            self.return_button.pack_forget()
+        except:
+            return
 
     def start_game_click(self, event):
         h = self.middle_frame.winfo_height()
         w = self.middle_frame.winfo_width()
 
         self.clean_middle_frame()
+        self.bottom_frame_game_mode()
 
-        self.american_test_button.place(y=h / 2, x=w / 5)
-        self.regular_test_button.place(y=h / 2, x=3 * w / 5)
+        self.american_test_button.place(y=h / 4, x=w / 5)
+        self.regular_test_button.place(y=h / 4, x=2 * w / 5)
+
+        self.five_q_button.place(y= h / 2, x= w/5)
+        self.ten_q_button.place(y= h / 2, x= 1.5*w/5)
+        self.fifteen_q_button.place(y= h / 2, x= 2*w/5)
+        self.twenty_q_button.place(y= h / 2, x= 2.5*w/5)
+
+        self.canvas.create_text(265, h/5,text="Game type", font="Helvetica 20")
+        self.canvas.create_text(300, 2*h / 5 + 20, text="Question number", font="Helvetica 20")
+        self.canvas.create_text(280, 3* h / 5+30, text="Question type", font="Helvetica 20")
+
+        self.question_type_listbox.place(x=w/5, y=2*h/3 + 25)
+        self.scrollbar.place(x=135)
+
+
 
     def exercise_click(self, event):
         h = self.middle_frame.winfo_height()
@@ -136,16 +204,21 @@ class MainWindow2:
     def about_click(self, event):
         self.clean_middle_frame()
 
-    def american_test_click(self, event):
-        self.current_american_test = lg.AmericanTest()
+    def american_test_begin(self, number_of_questions):
+        self.current_american_test = lg.AmericanTest(number_of_questions=number_of_questions)
         self.current_question = 0
 
         self.paint_american_question()
 
-    def regular_test_click(self,event):
-        current_test = lg.AmericanTest()
+    def start_game(self, event):
+        s="instart\n"; s+="number= "; s+=str(self.game_config_number); s+="\ntype: "; s+=str(self.game_config_question)
+        s+="\ngame= ";s+=str(self.game_config_game); print(s)
+        if self.game_config_number is -1 or self.game_config_number is -1:
+            return
 
-        self.paint_american_question()
+
+        if self.game_config_game is "american":
+            self.american_test_begin(self.game_config_number)
 
     def chose_answer(self, answer):
         self.current_american_test.accept_answer(self.current_question, answer)
@@ -211,6 +284,42 @@ class MainWindow2:
 
     def score(self):
         print(str(self.current_american_test.calc_grade()))
+
+
+    def show_conf_test_frame(self):
+        self.clean_middle_frame()
+
+    def game_type_change(self, type):
+        if type is "american":
+            self.game_config_game = "american"
+            self.american_test_button.config(bg="white", fg="black")
+            self.regular_test_button.config(bg="#525286", fg="white")
+
+        if type is "regular":
+            self.game_config_game = "regular"
+            self.regular_test_button.config(bg="white", fg="black")
+            self.american_test_button.config(bg="#525286", fg="white")
+
+    def question_number_change(self, number):
+        self.game_config_number = number
+        temp_map = [5,10,15,20]
+
+        button_list= [self.five_q_button,self.ten_q_button,self.fifteen_q_button, self.twenty_q_button]
+
+        for button in button_list:
+            button.config(bg="#525286", fg="white")
+
+        button_list[temp_map.index(number)].config(bg="white", fg="black")
+
+    def bottom_frame_game_mode(self):
+        self.clean_bottom_frame()
+
+        self.go_button_game.pack(side="left", padx=(620 / 9))
+        self.return_button.pack(side="left", padx=(620 / 9))
+
+    def return_to_main(self, event):
+        self.clean_middle_frame()
+        self.bottom_frame_main()
 
 
 ##font=("Courier", 18)
