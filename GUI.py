@@ -9,7 +9,7 @@ import Engine as lg
 import tkinter.font as font
 
 
-class MainWindow2:
+class MainWindow:
 
     def __init__(self, master):
         frame = tk.Frame(master)
@@ -85,11 +85,17 @@ class MainWindow2:
         self.question_type_listbox.insert(1, "Equation")
         self.question_type_listbox.insert(2, "Expression")
 
+        self.question_type_listbox.bind("<Button-1>", self.question_type_change())
+
+        ##self.question_type_listbox.bind("<Button-1>", self.cha
+
+        self.resault_button = tk.Button(self.down_frame, text="Answers", height= 1, width=9, bg="#525286", fg="white", font=self.button_font)
+        self.resault_button.bind("<Button-1>", self.calc_grade)
+
         self.five_q_button.bind("<Button-1>", lambda event, number=5: self.question_number_change(number))
         self.ten_q_button.bind("<Button-1>", lambda event, number=10: self.question_number_change(number))
         self.fifteen_q_button.bind("<Button-1>", lambda event, number=15: self.question_number_change(number))
         self.twenty_q_button.bind("<Button-1>", lambda event, number=20: self.question_number_change(number))
-
 
         self.new_worksheet_button = tk.Button(self.canvas, text="New", width=11, font=self.button_font_small, bg="#525286", fg="white")
         self.load_worksheet_button = tk.Button(self.canvas, text="Load", width=11, font=self.button_font_small, bg="#525286", fg="white")
@@ -118,6 +124,8 @@ class MainWindow2:
 
         self.current_american_test = lg.AmericanTest()
         self.current_question = -1
+
+        self.answer_mode = "no"
 
 
 
@@ -165,6 +173,7 @@ class MainWindow2:
         try:
             self.go_button_game.pack_forget()
             self.return_button.pack_forget()
+            self.resault_button.pack_forget()
         except:
             return
 
@@ -175,6 +184,7 @@ class MainWindow2:
         self.clean_middle_frame()
         self.bottom_frame_game_mode()
 
+        print("here")
         self.american_test_button.place(y=h / 4, x=w / 5)
         self.regular_test_button.place(y=h / 4, x=2 * w / 5)
 
@@ -192,33 +202,52 @@ class MainWindow2:
 
 
 
+
     def exercise_click(self, event):
         h = self.middle_frame.winfo_height()
         w = self.middle_frame.winfo_width()
 
         self.clean_middle_frame()
+        self.bottom_frame_main()
 
         self.new_worksheet_button.place(y=h / 2, x=w / 5)
         self.load_worksheet_button.place(y=h / 2, x=3 * w / 5)
 
     def about_click(self, event):
+
         self.clean_middle_frame()
 
-    def american_test_begin(self, number_of_questions):
-        self.current_american_test = lg.AmericanTest(number_of_questions=number_of_questions)
+    def american_test_begin(self, number_of_questions, qtype=lg.lg.ExpressionExercise):
+        self.current_american_test = lg.AmericanTest(number_of_questions=number_of_questions, qtype=qtype)
         self.current_question = 0
 
         self.paint_american_question()
 
     def start_game(self, event):
-        s="instart\n"; s+="number= "; s+=str(self.game_config_number); s+="\ntype: "; s+=str(self.game_config_question)
-        s+="\ngame= ";s+=str(self.game_config_game); print(s)
+        self.question_type_change()
+        self.answer_mode = "no"
+        ##s="instart\n"; s+="number= "; s+=str(self.game_config_number); s+="\ntype: "; s+=str(self.game_config_question)
+        ##s+="\ngame= ";s+=str(self.game_config_game); print(s)
         if self.game_config_number is -1 or self.game_config_number is -1:
             return
 
+        type = lg.lg.ExpressionExercise
+
+        if self.game_config_question == "Equation":
+            type = lg.lg.EquationExercise
 
         if self.game_config_game is "american":
-            self.american_test_begin(self.game_config_number)
+            self.american_test_begin(self.game_config_number, qtype=type)
+
+        self.update_down_frame_for_game_mode()
+
+    def update_down_frame_for_game_mode(self):
+        self.clean_bottom_frame()
+        self.start_game_button.config(text="New")
+        self.start_game_button.pack(side="left", padx=(620 / 9))
+        self.exercise_button.pack(side="left", padx=(620 / 9))
+        self.resault_button.pack(side="left", padx=(620 / 9))
+
 
     def chose_answer(self, answer):
         self.current_american_test.accept_answer(self.current_question, answer)
@@ -233,6 +262,14 @@ class MainWindow2:
 
             else:
                 temp[button].config(bg="black")
+
+        if self.answer_mode is "yes":
+            for button in range(len(temp)):
+                if button == self.current_american_test.user_choice[self.current_question]:
+                    temp[button].config(bg="red")
+
+                if button == self.current_american_test.right_answers[self.current_question]:
+                    temp[button].config(bg="green")
 
     def paint_american_question(self):
         test = self.current_american_test
@@ -311,6 +348,10 @@ class MainWindow2:
 
         button_list[temp_map.index(number)].config(bg="white", fg="black")
 
+    def question_type_change(self):
+        self.game_config_question = self.question_type_listbox.get("anchor")
+        return
+
     def bottom_frame_game_mode(self):
         self.clean_bottom_frame()
 
@@ -321,6 +362,12 @@ class MainWindow2:
         self.clean_middle_frame()
         self.bottom_frame_main()
 
+    def calc_grade(self, event):
+        s="Your score: "; s+=str(self.current_american_test.calc_grade()); s+="/100"
+        self.write_to_information_bar(s)
+        self.answer_mode = "yes"
+        self.paint_american_question()
+
 
 ##font=("Courier", 18)
 root = tk.Tk()  # This is the main fram
@@ -330,7 +377,7 @@ current_window = tk.Toplevel(root)
 current_window.geometry('{}x{}'.format(1000, 620))
 current_window.wm_protocol("WM_DELETE_WINDOW", root.destroy)
 
-m = MainWindow2(current_window)
+m = MainWindow(current_window)
 
 
 root.mainloop()  # keeps the window open

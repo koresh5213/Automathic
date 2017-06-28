@@ -20,8 +20,7 @@ class AmericanTest:
                 ok = -1
                 while ok == -1:
                     current_symbols = self.question_array[question].get_symbols()
-                    self.answer_matrix[question][answer] = self.create_a_random_asnwer(current_symbols)
-                    temp_expression = self.create_a_random_asnwer(current_symbols)
+                    self.answer_matrix[question][answer] = self.question_array[question].create_a_random_answer(current_symbols)
 
                     ok = 1
                     if self.question_array[question].get_solution().is_identical(self.answer_matrix[question][answer]) == 1:
@@ -51,15 +50,6 @@ class AmericanTest:
                 grade+=factor
 
         return grade
-
-    def create_a_random_asnwer(self, symbols):
-        random_expression = lg.Expression()
-
-        for symbol in symbols:
-            temp = lg.Variable(number=random.randrange(1, 15, 2), symbols=symbol)
-            random_expression.add_var(temp)
-
-        return random_expression
 
     def test_to_string(self):
         s = "Test \n"
@@ -122,7 +112,7 @@ class AmericanTest:
         pdf.add_page()
         pdf.set_font('Courier', 'B', 16)
         dx=180; dy=10; cy=20
-        pdf.text(10, 10, "Test shhh")
+        pdf.text(10, 10, "American test by: Automathica")
         for question in range(len(self.question_array)):
             if cy + 15 > 270:
                 cy = 15
@@ -151,7 +141,3 @@ class AmericanTest:
 
         pdf.output('tuto15.pdf', 'F')
 
-
-am = AmericanTest()
-print(am.test_to_string())
-am.to_pdf()

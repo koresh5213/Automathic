@@ -94,6 +94,14 @@ class Variable:
                 var.symbols.index(symbol)
             except:
                 return -1
+
+        for symbol in var.get_symbol():
+            try:
+                self.symbols.index(symbol)
+            except:
+                return -1
+
+
         else:
             return 1
 
@@ -172,9 +180,8 @@ class Expression:
         self.heart.insert(position, var)
         return
 
-    def to_string(self):
+    def to_string(self, first="yes"):
         text = ""
-        first = "yes"
         for e in self.heart:
             if first == "yes" and type(e) == Variable:
                 text += e.to_string(first_in_line="yes")
@@ -256,7 +263,6 @@ class Expression:
             return -1
 
         temp_self  = copy.deepcopy(self)
-        temp_other = list(expression.heart)
 
         if len(self.heart) != len(expression.heart):
             return -1
@@ -371,6 +377,15 @@ class ExpressionExercise:
     def get_solution(self):
         return self.pro.process[0]
 
+    def create_a_random_answer(self, symbols):
+        random_expression = Expression()
+
+        for symbol in symbols:
+            temp = Variable(number=random.randrange(1, 15, 2), symbols=symbol)
+            random_expression.add_var(temp)
+
+        return random_expression
+
 ##############################################################################
 
 class Equation:
@@ -407,11 +422,19 @@ class Equation:
         self.sideA.add_var(add, random_location="yes")
         self.sideB.add_var(add, random_location="yes")
 
-    ##def number_add(self, add):
+    def is_identical(self, other):
+        if (self.sideA.is_identical(other.sideA) is 1) and (self.sideB.is_identical(other.sideB) is 1):
+            return 1
+
+        if (self.sideA.is_identical(other.sideB) is 1) and (self.sideB.is_identical(other.sideA) is 1):
+            return 1
+
+        return -1
 
 
     def find_me_a_symbol(self):
         return self.sideA.find_me_a_symbol()
+
 
 
 class EquationProcess:
@@ -425,7 +448,8 @@ class EquationProcess:
 
         for i in range(complications):
             if method is 1: ##multiply both sections in the same number
-                dup.multiply(Variable(number = random.randrange(-10,10)))
+                number = random.choice([2,3,5,7])
+                dup.multiply(Variable(number = number))
 
             if method is 2: ##add variable
                 symbol = self.solution.find_me_a_symbol()
@@ -440,6 +464,13 @@ class EquationProcess:
                     number = random.randrange(-10, 10)
                 dup.simple_add(Variable(number=number))
 
+            if method is 4:
+                number = 0
+                symbol = self.solution.find_me_a_symbol()
+                while number is 0:
+                    number = random.randrange(-10, 10)
+                dup.simple_add(Variable(number=number, symbols=symbol))
+
         self.process.append(dup)
 
     def to_string(self):
@@ -453,6 +484,19 @@ class EquationProcess:
     def eq_to_string(self):
         return self.process[-1].to_string()
 
+    def get_symbols(self):
+        symbols = []
+        temp_a = self.solution.sideA.return_symbols()
+        temp_b = self.solution.sideB.return_symbols()
+
+        for symbol in temp_a+temp_b:
+            if symbol not in symbols:
+                symbols.append(symbol)
+
+        symbols.remove([])
+
+        return symbols
+
 class EquationExercise:
     def __init__(self, diff=2):
 
@@ -465,13 +509,13 @@ class EquationExercise:
         self.solution = Equation(sideA=temp_expression, sideB=temp_expression2)
 
         self.pro = EquationProcess(solution=self.solution)
-        self.pro.complicate_step(method=1, complications=2)
-        self.pro.complicate_step(method=2, complications=3)
-        self.pro.complicate_step(method=3, complications=3)
+        self.pro.complicate_step(method=3, complications=1)
+        self.pro.complicate_step(method=4, complications=1)
+        self.pro.complicate_step(method=2, complications=1)
+        ##self.pro.complicate_step(method=1, complications=1)
 
     def exercise_to_string(self):
-        return self.pro.solution.to_string()
-
+        return self.pro.eq_to_string()
 
     def solution_to_string(self, full="no"):
         if full == "yes":
@@ -481,6 +525,16 @@ class EquationExercise:
 
     def get_solution(self):
         return self.pro.solution
+
+    def create_a_random_answer(self, symbols):
+        side_a = Expression(heart=Variable(number=1, symbols=symbols))
+        side_b = Expression(heart=Variable(number=random.randrange(-10,10)))
+
+        answer = Equation(sideA=side_a, sideB=side_b)
+        return answer
+
+    def get_symbols(self):
+        return self.pro.get_symbols()
 
 def simple_pdf():
     from fpdf import FPDF
@@ -507,5 +561,38 @@ print(ex1.to_string())
 ex2 = string_to_expression("-120+2323")
 print(ex2.to_string())
 print(str(ex1.is_identical(ex2)))
+
+ee = EquationExercise()
+print (ee.exercise_to_string())
+print (ee.solution_to_string())
+
+
+##tester
+var1 = Variable(number=3)
+var2 = Variable()
+var3 = Variable(number=-13)
+var4 = Variable(number=3, symbols=["n"])
+var5 = Variable(number=3, symbols=["x", "y"])
+
+
+ex = Expression()
+ex.add_var(var1)
+ex.add_var(var2)
+ex.add_var(var3)
+ex.add_var(var4)
+ex.add_var(var5)
+
+ex1 = Expression(var1)
+ex2 = Expression(var4)
+ex3 = Expression(var3)
+
+eq1 = Equation(sideA=Expression(Variable(number=1, symbols=["x"])), sideB=ex1)
+eq2 = Equation(sideA=ex2, sideB=ex3)
+
+list = [var1, var2, var3, var4, var5, ex, ex1, ex2, ex3,  eq1, eq2]
+
+s=""
+for i in list:
+    s+=i.to_string(); s+="\n"
+print(s)
 '''
-simple_pdf()
